@@ -4,6 +4,7 @@ using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
@@ -86,7 +87,7 @@ namespace Retina
             {
                 th.Abort();
             }
-         
+
 
             string[] exts = { "jpg", "png", "bmp" };
             if (exts.Any(z => path.EndsWith(z)))
@@ -130,7 +131,14 @@ namespace Retina
                         recalc = false;
 
                         var msec = cap.Get(VideoCaptureProperties.PosMsec);
+                        var frames = cap.Get(VideoCaptureProperties.PosFrames);
+                        var framesCnt = cap.Get(VideoCaptureProperties.FrameCount);
+                        if (double.IsNaN(msec))
+                        {
+                            msec = (frames / ofps) * 1000;
+                        }
                         var span = new TimeSpan(0, 0, 0, 0, (int)msec);
+
                         label1.Invoke((Action)(() =>
                         {
                             label1.Text = "pos: " + span.ToString();
@@ -164,118 +172,134 @@ namespace Retina
                         }
                         pictureBox1.Image = bmp;
                     }
-                        //Thread.Sleep(40);
-                    }
+                    //Thread.Sleep(40);
+                }
             });
             th.IsBackground = true;
             th.Start();
         }
+
         int eyeWidth = 8;
+        bool faceDetectEnabled = true;
+
         public Tuple<Bitmap, Graphics> ProcessMat(Mat mat, InferenceSession session)
         {
+            List<FaceInfo> faceInfos = new List<FaceInfo>();
             RectangleF[] faces = null;
-            if (radioButton1.Checked)
-            {
-                faces = GetFacesSSD(mat.Clone());
-            }
             var bmp = BitmapConverter.ToBitmap(mat);
             var gr = Graphics.FromImage(bmp);
             Tuple<RectangleF[], Point2f[][], float[]> ret = null;
-            if (radioButton2.Checked)
+
+            if (faceDetectEnabled)
             {
-                ret = face.Forward(mat.Clone(), session);
-                faces = ret.Item1;
-                if (checkBox3.Checked)
+                if (radioButton1.Checked)
                 {
-                    foreach (var item in ret.Item2)
-                    {
-                        for (int i = 0; i < item.Length; i++)
-                        {
-                            Point2f ii2 = item[i];                            
-                            gr.FillEllipse(brushes[i], ii2.X - eyeWidth / 2, ii2.Y - eyeWidth / 2, eyeWidth, eyeWidth);
-
-                        }
-                    }
-                    for (int i = 0; i < ret.Item3.Length; i++)
-                    {
-                        float item = (float)ret.Item3[i];
-                        var pos = ret.Item1[i];
-                        gr.DrawString(Math.Round(item, 4) + "", new Font("Arial", 12), Brushes.Yellow, pos.X, pos.Y - 30);
-                    }
-                }
-            }
-
-            List<FaceInfo> faceInfos = new List<FaceInfo>();
-
-            for (int i1 = 0; i1 < faces.Length; i1++)
-            {
-                RectangleF item = faces[i1];
-                if (checkBox1.Checked)
-                {
-                    gr.DrawRectangle(new Pen(Color.Yellow, faceBoxWidth), new Rectangle((int)item.X, (int)item.Y, (int)item.Width, (int)item.Height));
-                }
-
-                //fix rect to quad
-                float inflx = 0;
-                float infly = 0;
-                var orig = new Rect((int)item.X, (int)item.Y, (int)item.Width, (int)item.Height);
-
-                float expandKoef = 1.1f;
-                OpenCvSharp.Point center = new OpenCvSharp.Point(orig.Left + orig.Width / 2, orig.Top + orig.Height / 2);
-
-                float ww = orig.Width * expandKoef;
-                float hh = orig.Height * expandKoef;
-
-                if (ww > hh)
-                {
-                    infly = (int)(ww - hh);
+                    faces = GetFacesSSD(mat.Clone());
                 }
                 else
                 {
-                    inflx = (int)(hh - ww);
+                    ret = face.Forward(mat.Clone(), session);
+                    faces = ret.Item1;
+                    if (checkBox3.Checked)
+                    {
+                        foreach (var item in ret.Item2)
+                        {
+                            for (int i = 0; i < item.Length; i++)
+                            {
+                                Point2f ii2 = item[i];
+                                gr.FillEllipse(brushes[i], ii2.X - eyeWidth / 2, ii2.Y - eyeWidth / 2, eyeWidth, eyeWidth);
+
+                            }
+                        }
+                        for (int i = 0; i < ret.Item3.Length; i++)
+                        {
+                            float item = (float)ret.Item3[i];
+                            var pos = ret.Item1[i];
+                            gr.DrawString(Math.Round(item, 4) + "", new Font("Arial", 12), Brushes.Yellow, pos.X, pos.Y - 30);
+                        }
+                    }
                 }
-                ww += inflx;
-                hh += infly;
 
-                Rect corrected = new Rect((int)(center.X - ww / 2), (int)(center.Y - hh / 2), (int)ww, (int)hh);
-
-                bool is_inside = (corrected & new Rect(0, 0, mat.Cols, mat.Rows)) == corrected;
-                if (is_inside)
+                for (int i1 = 0; i1 < faces.Length; i1++)
                 {
-                    var cor = mat.Clone(corrected);
-
-                    var axis = fsa.GetAxis(cor.Clone(), corrected);
-                    var val = Math.Abs(axis.Item2[0]) + Math.Abs(axis.Item2[1]);
-                    var val1 = Math.Abs(axis.Item2[0]);
-                    var val2 = Math.Abs(axis.Item2[1]);
-
+                    RectangleF item = faces[i1];
                     if (checkBox1.Checked)
                     {
-                        gr.DrawRectangle(new Pen(Color.Green, faceBoxWidth * 2), new Rectangle((int)item.X, (int)item.Y, (int)item.Width, (int)item.Height));
+                        gr.DrawRectangle(new Pen(Color.Yellow, faceBoxWidth), new Rectangle((int)item.X, (int)item.Y, (int)item.Width, (int)item.Height));
                     }
 
-                    faceInfos.Add(new FaceInfo() { Label = val.ToString(), Mat = cor, Rect = new Rect2f(item.X, item.Y, item.Width, item.Height) });
+                    //fix rect to quad
+                    float inflx = 0;
+                    float infly = 0;
+                    var orig = new Rect((int)item.X, (int)item.Y, (int)item.Width, (int)item.Height);
 
-                    Pen[] pens = new Pen[] { Pens.Red, Pens.Green, Pens.Blue };
+                    float expandKoef = 1.1f;
+                    OpenCvSharp.Point center = new OpenCvSharp.Point(orig.Left + orig.Width / 2, orig.Top + orig.Height / 2);
 
-                    if (checkBox2.Checked)
+                    float ww = orig.Width * expandKoef;
+                    float hh = orig.Height * expandKoef;
+
+                    if (ww > hh)
                     {
-                        gr.DrawString("yaw: " + axis.Item2[0], new Font("Arial", 12), Brushes.Red, (int)orig.X + yprShift, (int)orig.Y);
-                        gr.DrawString("pitch: " + axis.Item2[1], new Font("Arial", 12), Brushes.Red, (int)orig.X + yprShift, (int)orig.Y + 16);
-                        gr.DrawString("roll: " + axis.Item2[2], new Font("Arial", 12), Brushes.Red, (int)orig.X + yprShift, (int)orig.Y + 32);
+                        infly = (int)(ww - hh);
                     }
-
-                    if (checkBox4.Checked)
+                    else
                     {
-                        for (int i = 0; i < axis.Item1.Length; i++)
+                        inflx = (int)(hh - ww);
+                    }
+                    ww += inflx;
+                    hh += infly;
+
+                    Rect corrected = new Rect((int)(center.X - ww / 2), (int)(center.Y - hh / 2), (int)ww, (int)hh);
+
+                    bool is_inside = (corrected & new Rect(0, 0, mat.Cols, mat.Rows)) == corrected;
+                    if (is_inside)
+                    {
+                        var cor = mat.Clone(corrected);
+
+                        var axis = fsa.GetAxis(cor.Clone(), corrected);
+                        if (faceRecognitionEnabled)
                         {
-                            int[] axis1 = axis.Item1[i];
-                            gr.DrawLine(new Pen(pens[i].Color, faceBoxWidth), axis1[0], axis1[1], axis1[2], axis1[3]);
+                            var fn = new FaceNet();
+                            var (label, mdist) = fn.Recognize(cor.Clone());
+                            var txt = (label == null || mdist.Value < faceRecognitionThreshold) ? "(unknown)" : $"{label.Label} ({mdist.Value:N2})";
+                            var font = new Font("Arial", 12);
+                            var ms = gr.MeasureString(txt, font);
+                            gr.FillRectangle(new SolidBrush(Color.FromArgb(64, Color.White)), orig.X, orig.Y - 30, ms.Width, ms.Height);
+                            gr.DrawString(txt, font, Brushes.Blue, (int)orig.X, (int)orig.Y - 30);
+                        }
+
+                        var val = Math.Abs(axis.Item2[0]) + Math.Abs(axis.Item2[1]);
+                        var val1 = Math.Abs(axis.Item2[0]);
+                        var val2 = Math.Abs(axis.Item2[1]);
+
+                        if (checkBox1.Checked)
+                        {
+                            gr.DrawRectangle(new Pen(Color.Green, faceBoxWidth * 2), new Rectangle((int)item.X, (int)item.Y, (int)item.Width, (int)item.Height));
+                        }
+
+                        faceInfos.Add(new FaceInfo() { Label = val.ToString(), Mat = cor, Rect = new Rect2f(item.X, item.Y, item.Width, item.Height) });
+
+                        Pen[] pens = new Pen[] { Pens.Red, Pens.Green, Pens.Blue };
+
+                        if (checkBox2.Checked)
+                        {
+                            gr.DrawString("yaw: " + axis.Item2[0], new Font("Arial", 12), Brushes.Red, (int)orig.X + yprShift, (int)orig.Y);
+                            gr.DrawString("pitch: " + axis.Item2[1], new Font("Arial", 12), Brushes.Red, (int)orig.X + yprShift, (int)orig.Y + 16);
+                            gr.DrawString("roll: " + axis.Item2[2], new Font("Arial", 12), Brushes.Red, (int)orig.X + yprShift, (int)orig.Y + 32);
+                        }
+
+                        if (checkBox4.Checked)
+                        {
+                            for (int i = 0; i < axis.Item1.Length; i++)
+                            {
+                                int[] axis1 = axis.Item1[i];
+                                gr.DrawLine(new Pen(pens[i].Color, faceBoxWidth), axis1[0], axis1[1], axis1[2], axis1[3]);
+                            }
                         }
                     }
                 }
             }
-
             if (faceInfos.Any())
             {
                 var fr = faceInfos.OrderBy(x => x.Rect.Left).ThenBy(z => z.Rect.Top).First();
@@ -362,7 +386,7 @@ namespace Retina
                 yprShift = int.Parse(textBox2.Text);
                 recalc = true;
             }
-            catch 
+            catch
             {
 
             }
@@ -414,7 +438,7 @@ namespace Retina
         }
 
 
-        VideoWriter out_vid = null;        
+        VideoWriter out_vid = null;
 
         private void toolStripButton2_Click(object sender, EventArgs e)
         {
@@ -480,7 +504,7 @@ namespace Retina
         private void pictureBox1_DragDrop(object sender, DragEventArgs e)
         {
             var ar = e.Data.GetData(DataFormats.FileDrop) as string[];
-            if (ar == null) return;            
+            if (ar == null) return;
             InitSessions();
             open(ar[0]);
         }
@@ -489,6 +513,35 @@ namespace Retina
         {
             eyeWidth = (int)numericUpDown2.Value;
             recalc = true;
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (th != null) th.Abort();
+        }
+
+        private void checkBox7_CheckedChanged(object sender, EventArgs e)
+        {
+            faceDetectEnabled = checkBox7.Checked;
+        }
+
+        bool faceRecognitionEnabled = false;
+        private void checkBox8_CheckedChanged(object sender, EventArgs e)
+        {
+            faceRecognitionEnabled = checkBox8.Checked;
+        }
+
+        double faceRecognitionThreshold = 0.3;
+        private void textBox3_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                faceRecognitionThreshold = double.Parse(textBox3.Text.Replace(",", "."), CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+
+            }
         }
     }
 }
