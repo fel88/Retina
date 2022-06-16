@@ -30,6 +30,13 @@ namespace Retina
             ff.MdiParent = this;
             ff.Show();
         }
+
+        private void toolStripButton4_Click(object sender, EventArgs e)
+        {
+            SearchFaces sf = new SearchFaces();
+            sf.MdiParent = this;
+            sf.Show();
+        }
     }
 }
 

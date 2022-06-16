@@ -114,7 +114,12 @@ namespace Retina
             if (listView1.SelectedItems.Count == 0) return;
             var ff = listView1.SelectedItems[0].Tag as RecFaceInfo;
             if (MessageBox.Show($"Are you sure to delete: {ff.Label}?", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-            FaceNet.Faces.Remove(ff);
+            for (int i = 0; i < listView1.SelectedItems.Count; i++)
+            {
+                ff = listView1.SelectedItems[i].Tag as RecFaceInfo;
+                FaceNet.Faces.Remove(ff);
+            }
+          
             pictureBox1.Image = null;
             updateList();
         }

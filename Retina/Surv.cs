@@ -19,7 +19,12 @@ namespace Retina
         {
             //var temp = Environment.GetEnvironmentVariable("OPENCV_FFMPEG_CAPTURE_OPTIONS");
             //Environment.SetEnvironmentVariable("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
-            OpenCvSharp.VideoCapture cap = new OpenCvSharp.VideoCapture(textBox1.Text, VideoCaptureAPIs.FFMPEG);
+            //OpenCvSharp.VideoCapture cap = new OpenCvSharp.VideoCapture(textBox1.Text, VideoCaptureAPIs.FFMPEG);
+            OpenCvSharp.VideoCapture cap = null;
+            if (webcam)
+                cap = new VideoCapture(0);
+            else
+                cap = new VideoCapture(textBox1.Text, VideoCaptureAPIs.FFMPEG);
 
             if (!cap.IsOpened())
             {
@@ -51,6 +56,11 @@ namespace Retina
                     pictureBox1.Image = BitmapConverter.ToBitmap(lastMat);
                 }
             }
-        }        
+        }
+        bool webcam = false;
+        private void button2_Click(object sender, EventArgs e)
+        {
+            webcam = true;
+        }
     }
 }

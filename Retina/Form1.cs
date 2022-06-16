@@ -81,7 +81,7 @@ namespace Retina
         bool backward = false;
 
         Thread th;
-        private void open(string path)
+        private void open(string path, bool webcam = false)
         {
             if (th != null)
             {
@@ -89,20 +89,28 @@ namespace Retina
             }
 
 
-            string[] exts = { "jpg", "png", "bmp" };
-            if (exts.Any(z => path.EndsWith(z)))
+            if (!webcam)
             {
-                var mat = Cv2.ImRead(path);
-                var session = new InferenceSession("nets\\FaceDetector.onnx");
+                string[] exts = { "jpg", "png", "bmp" };
+                if (exts.Any(z => path.EndsWith(z)))
+                {
+                    var mat = Cv2.ImRead(path);
+                    var session = new InferenceSession("nets\\FaceDetector.onnx");
 
-                var rr = ProcessMat(mat, session);
-                pictureBox1.Image = rr.Item1;
-                return;
+                    var rr = ProcessMat(mat, session);
+                    pictureBox1.Image = rr.Item1;
+                    return;
+                }
             }
 
             th = new Thread(() =>
             {
-                VideoCapture cap = new VideoCapture(path);
+                VideoCapture cap = null;
+                if (webcam)
+                    cap = new VideoCapture(0);
+                else
+                    cap = new VideoCapture(path);
+
                 Mat mat = new Mat();
                 var ofps = cap.Get(VideoCaptureProperties.Fps);
                 cap.Set(VideoCaptureProperties.Fps, 5);
@@ -365,11 +373,9 @@ namespace Retina
         }
         bool inited = false;
         private void toolStripButton1_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog ofd = new OpenFileDialog();
-            if (ofd.ShowDialog() != DialogResult.OK) return;
+        {            
             InitSessions();
-            open(ofd.FileName);
+            open(null, true);
         }
 
 
@@ -486,12 +492,7 @@ namespace Retina
         {
             outputFileName = textBox1.Text;
         }
-        public class FaceInfo
-        {
-            public string Label;
-            public Mat Mat;
-            public Rect2f Rect;
-        }
+
 
         private void pictureBox1_DragEnter(object sender, DragEventArgs e)
         {
@@ -543,5 +544,19 @@ namespace Retina
 
             }
         }
+
+        private void toolStripButton3_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            if (ofd.ShowDialog() != DialogResult.OK) return;
+            InitSessions();
+            open(ofd.FileName);
+        }
+    }
+    public class FaceInfo
+    {
+        public string Label;
+        public Mat Mat;
+        public Rect2f Rect;
     }
 }

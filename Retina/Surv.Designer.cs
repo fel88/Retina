@@ -35,6 +35,7 @@
             this.button1 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.button2 = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel1.SuspendLayout();
@@ -68,6 +69,7 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.button2);
             this.panel1.Controls.Add(this.button1);
             this.panel1.Controls.Add(this.textBox1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -90,7 +92,7 @@
             // 
             this.textBox1.Location = new System.Drawing.Point(97, 10);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(688, 20);
+            this.textBox1.Size = new System.Drawing.Size(637, 20);
             this.textBox1.TabIndex = 0;
             this.textBox1.Text = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov";
             // 
@@ -99,6 +101,16 @@
             this.timer1.Enabled = true;
             this.timer1.Interval = 40;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(736, 8);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(57, 23);
+            this.button2.TabIndex = 2;
+            this.button2.Text = "webcam";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // Surv
             // 
@@ -124,5 +136,6 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Button button2;
     }
 }
