@@ -9,7 +9,7 @@ namespace Retina
 {
     public class FaceNet
     {
-        InferenceSession session;
+        static InferenceSession session;
         public static List<RecFaceInfo> Faces = new List<RecFaceInfo>();
         public Tuple<RecFaceInfo, double?> Recognize(Mat mat)
         {

@@ -1,16 +1,12 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using OpenCvSharp;
-using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Retina
@@ -30,7 +26,6 @@ namespace Retina
             {
                 listView2.Items.Add(new ListViewItem(new string[] { item.Label }) { Tag = item });
             }
-
         }
 
         private void button1_Click(object sender, EventArgs e)

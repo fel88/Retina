@@ -3,6 +3,7 @@ using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
@@ -163,7 +164,14 @@ namespace Retina
                             backward = false;
                         }
 
+                        var sw = Stopwatch.StartNew();
                         var rr = ProcessMat(mat, session);
+                        sw.Stop();
+                        statusStrip1.Invoke((Action)(() =>
+                        {
+                            toolStripStatusLabel1.Text = $"inference time: {sw.ElapsedMilliseconds}ms";
+                        }));
+
                         var gr = rr.Item2;
                         var bmp = rr.Item1;
                         if (checkBox6.Checked)
@@ -373,7 +381,7 @@ namespace Retina
         }
         bool inited = false;
         private void toolStripButton1_Click(object sender, EventArgs e)
-        {            
+        {
             InitSessions();
             open(null, true);
         }
