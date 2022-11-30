@@ -37,6 +37,13 @@ namespace Retina
             sf.MdiParent = this;
             sf.Show();
         }
+
+        private void toolStripButton5_Click(object sender, EventArgs e)
+        {
+            mixer sf = new mixer();
+            sf.MdiParent = this;
+            sf.Show();
+        }
     }
 }
 

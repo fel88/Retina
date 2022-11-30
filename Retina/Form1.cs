@@ -121,7 +121,7 @@ namespace Retina
 
                     }
 
-                    //cap.Set(VideoCaptureProperties.AutoFocus, camAutoFocus ? 1 : 0);
+                    cap.Set(VideoCaptureProperties.AutoFocus, camAutoFocus ? 1 : 0);
 
                 }
                 else
