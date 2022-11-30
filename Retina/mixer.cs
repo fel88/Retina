@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,17 +22,48 @@ namespace Retina
 
         private async void button1_Click(object sender, EventArgs e)
         {
+            int ofps = 30;
+            int ww = 1920;
+            int hh = 1080;
+            var fn = textBox1.Text;
+            if (File.Exists(fn))
+            {
+                var res = MessageBox.Show($"File {fn} exists. Overwrite?", Text, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                switch (res)
+                {
+                    case DialogResult.Yes:
+                        break;
+                    case DialogResult.No:
+                        int ii = 0;
+                        while (true)
+                        {
+                            var nfn = Path.GetFileNameWithoutExtension(fn) + "_" + ii + Path.GetExtension(fn);
+                            if (!File.Exists(nfn))
+                            {
+                                fn = nfn; 
+                                break;
+                            }
+                            ii++;
+                            if (ii > 1000) return;
+
+                        }
+
+                        break;
+                    case DialogResult.Cancel:
+                        return;
+                }
+            }
             button1.Enabled = false;
+
+            var out_vid = new VideoWriter(fn, FourCC.XVID, ofps < 0.5 ? 30 : ofps,
+                new OpenCvSharp.Size(ww * 2, hh));
+
             await Task.Run(() =>
             {
-                int ofps = 30;
-                int ww = 1920;
-                int hh = 1080;
-                var out_vid = new VideoWriter(textBox1.Text, FourCC.XVID, ofps < 0.5 ? 30 : ofps,
-                    new OpenCvSharp.Size(ww * 2, hh));
 
-                var v1 = openCam(0, true, false, ww, hh);
-                var v2 = openCam(1, true, false, ww, hh);
+
+                var v1 = openCam(cam1Idx, true, false, ww, hh);
+                var v2 = openCam(cam2Idx, true, false, ww, hh);
                 int cnt = (int)numericUpDown1.Value;
                 int i = 0;
                 //for (int i = 0; i < cnt; i++)
@@ -42,7 +74,7 @@ namespace Retina
                     if (fixedFrames)
                     {
                         if (i >= cnt) break;
-                      
+
                     }
                     else if (stop)
                         break;
@@ -87,10 +119,24 @@ namespace Retina
         {
             stop = true;
         }
+
         bool fixedFrames = false;
+
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
-            fixedFrames = true;
+            fixedFrames = checkBox1.Checked;
+        }
+
+        int cam1Idx = 0;
+        int cam2Idx = 0;
+        private void numericUpDown2_ValueChanged(object sender, EventArgs e)
+        {
+            cam1Idx = (int)numericUpDown2.Value;
+        }
+
+        private void numericUpDown3_ValueChanged(object sender, EventArgs e)
+        {
+            cam2Idx = (int)numericUpDown3.Value;
         }
     }
 }
