@@ -67,15 +67,7 @@ namespace Retina
 
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
-            OpenFileDialog ofd = new OpenFileDialog();
-            if (ofd.ShowDialog() != DialogResult.OK) return;
-            pictureBox1.Image = Bitmap.FromFile(ofd.FileName);
-            var mat = OpenCvSharp.Cv2.ImRead(ofd.FileName);
-            var best = net.Recognize(mat);
-            if (best != null && best.Item1 != null)
-            {
-                MessageBox.Show(best.Item1.Label);
-            }
+            
         }
 
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
@@ -130,6 +122,31 @@ namespace Retina
             FaceNet.Faces.Clear();
             pictureBox1.Image = null;
             updateList();
+        }
+
+        private void fromScreenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var img = Clipboard.GetImage() as Bitmap;
+            var mat = img.ToMat();
+            pictureBox1.Image = img;            
+            var best = net.Recognize(mat);
+            if (best != null && best.Item1 != null)
+            {
+                MessageBox.Show(best.Item1.Label);
+            }
+        }
+
+        private void fromFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            if (ofd.ShowDialog() != DialogResult.OK) return;
+            pictureBox1.Image = Bitmap.FromFile(ofd.FileName);
+            var mat = OpenCvSharp.Cv2.ImRead(ofd.FileName);
+            var best = net.Recognize(mat);
+            if (best != null && best.Item1 != null)
+            {
+                MessageBox.Show(best.Item1.Label);
+            }
         }
     }
 }

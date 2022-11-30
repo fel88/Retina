@@ -36,13 +36,15 @@
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addPersonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.clearToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
             this.loadFaceDatasetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFacesDatasetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
-            this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.clearToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.fromFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fromScreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
@@ -104,7 +106,7 @@
             this.deleteToolStripMenuItem,
             this.clearToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 92);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(134, 70);
             // 
             // addPersonToolStripMenuItem
             // 
@@ -113,11 +115,25 @@
             this.addPersonToolStripMenuItem.Text = "add person";
             this.addPersonToolStripMenuItem.Click += new System.EventHandler(this.addPersonToolStripMenuItem_Click);
             // 
+            // deleteToolStripMenuItem
+            // 
+            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(133, 22);
+            this.deleteToolStripMenuItem.Text = "delete";
+            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
+            // 
+            // clearToolStripMenuItem
+            // 
+            this.clearToolStripMenuItem.Name = "clearToolStripMenuItem";
+            this.clearToolStripMenuItem.Size = new System.Drawing.Size(133, 22);
+            this.clearToolStripMenuItem.Text = "clear";
+            this.clearToolStripMenuItem.Click += new System.EventHandler(this.clearToolStripMenuItem_Click);
+            // 
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripDropDownButton1,
-            this.toolStripButton1});
+            this.toolStripDropDownButton2});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(800, 25);
@@ -139,40 +155,42 @@
             // loadFaceDatasetToolStripMenuItem
             // 
             this.loadFaceDatasetToolStripMenuItem.Name = "loadFaceDatasetToolStripMenuItem";
-            this.loadFaceDatasetToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.loadFaceDatasetToolStripMenuItem.Size = new System.Drawing.Size(138, 22);
             this.loadFaceDatasetToolStripMenuItem.Text = "load dataset";
             this.loadFaceDatasetToolStripMenuItem.Click += new System.EventHandler(this.loadFaceDatasetToolStripMenuItem_Click);
             // 
             // saveFacesDatasetToolStripMenuItem
             // 
             this.saveFacesDatasetToolStripMenuItem.Name = "saveFacesDatasetToolStripMenuItem";
-            this.saveFacesDatasetToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveFacesDatasetToolStripMenuItem.Size = new System.Drawing.Size(138, 22);
             this.saveFacesDatasetToolStripMenuItem.Text = "save dataset";
             this.saveFacesDatasetToolStripMenuItem.Click += new System.EventHandler(this.saveFacesDatasetToolStripMenuItem_Click);
             // 
-            // toolStripButton1
+            // toolStripDropDownButton2
             // 
-            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(62, 22);
-            this.toolStripButton1.Text = "recognize";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            this.toolStripDropDownButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fromFileToolStripMenuItem,
+            this.fromScreenToolStripMenuItem});
+            this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
+            this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
+            this.toolStripDropDownButton2.Size = new System.Drawing.Size(71, 22);
+            this.toolStripDropDownButton2.Text = "recognize";
             // 
-            // deleteToolStripMenuItem
+            // fromFileToolStripMenuItem
             // 
-            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.deleteToolStripMenuItem.Text = "delete";
-            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
+            this.fromFileToolStripMenuItem.Name = "fromFileToolStripMenuItem";
+            this.fromFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.fromFileToolStripMenuItem.Text = "from file";
+            this.fromFileToolStripMenuItem.Click += new System.EventHandler(this.fromFileToolStripMenuItem_Click);
             // 
-            // clearToolStripMenuItem
+            // fromScreenToolStripMenuItem
             // 
-            this.clearToolStripMenuItem.Name = "clearToolStripMenuItem";
-            this.clearToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.clearToolStripMenuItem.Text = "clear";
-            this.clearToolStripMenuItem.Click += new System.EventHandler(this.clearToolStripMenuItem_Click);
+            this.fromScreenToolStripMenuItem.Name = "fromScreenToolStripMenuItem";
+            this.fromScreenToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.fromScreenToolStripMenuItem.Text = "from clipboard";
+            this.fromScreenToolStripMenuItem.Click += new System.EventHandler(this.fromScreenToolStripMenuItem_Click);
             // 
             // FaceRecognition
             // 
@@ -202,11 +220,13 @@
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem addPersonToolStripMenuItem;
         private System.Windows.Forms.ToolStrip toolStrip1;
-        private System.Windows.Forms.ToolStripButton toolStripButton1;
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
         private System.Windows.Forms.ToolStripMenuItem loadFaceDatasetToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveFacesDatasetToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem clearToolStripMenuItem;
+        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton2;
+        private System.Windows.Forms.ToolStripMenuItem fromFileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem fromScreenToolStripMenuItem;
     }
 }

@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.Management;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -22,7 +23,7 @@ namespace Retina
             AllowDrop = true;
             pictureBox1.AllowDrop = true;
         }
-
+        
         RetinaFace face = new RetinaFace();
         FsaDetector fsa = new FsaDetector();
 
@@ -80,7 +81,7 @@ namespace Retina
 
         bool forward = false;
         bool backward = false;
-
+      
         Thread th;
         private void open(string path, bool webcam = false)
         {
@@ -108,17 +109,38 @@ namespace Retina
             {
                 VideoCapture cap = null;
                 if (webcam)
-                    cap = new VideoCapture(0);
+                {
+                    cap = new VideoCapture(camIdx);
+
+                    cap.Set(VideoCaptureProperties.FrameWidth, camW);
+                    cap.Set(VideoCaptureProperties.FrameHeight, camH);
+                    if (camMjpeg)
+                    {
+                        var res = cap.Set(VideoCaptureProperties.FourCC, FourCC.MJPG);
+                        var res2 = cap.Get(VideoCaptureProperties.FourCC);
+
+                    }
+
+                    //cap.Set(VideoCaptureProperties.AutoFocus, camAutoFocus ? 1 : 0);
+
+                }
                 else
                     cap = new VideoCapture(path);
 
                 Mat mat = new Mat();
+
+                cap.Set(VideoCaptureProperties.Fps, camFps);
                 var ofps = cap.Get(VideoCaptureProperties.Fps);
-                cap.Set(VideoCaptureProperties.Fps, 5);
+
                 var session = new InferenceSession("nets\\FaceDetector.onnx");
                 bool first = true;
+                Stopwatch sw1 = new Stopwatch();
                 while (true)
                 {
+                    var ms1 = sw1.ElapsedMilliseconds;
+
+                    sw1.Restart();
+
                     if (forwTo)
                     {
                         forwTo = false;
@@ -130,7 +152,7 @@ namespace Retina
                     if (!pause || oneFrameStep || recalc)
                     {
                         oneFrameStep = false;
-
+                        Stopwatch sww = Stopwatch.StartNew();
                         if (!recalc || first)
                         {
                             if (!cap.Read(mat)) break;
@@ -148,10 +170,7 @@ namespace Retina
                         }
                         var span = new TimeSpan(0, 0, 0, 0, (int)msec);
 
-                        label1.Invoke((Action)(() =>
-                        {
-                            label1.Text = "pos: " + span.ToString();
-                        }));
+
 
                         if (forward)
                         {
@@ -163,13 +182,18 @@ namespace Retina
                             cap.Set(VideoCaptureProperties.PosMsec, (msec - 5000) > 0 ? (msec - 5000) : 0);
                             backward = false;
                         }
+                        sww.Stop();
+                        var captureTime = sww.ElapsedMilliseconds;
 
                         var sw = Stopwatch.StartNew();
                         var rr = ProcessMat(mat, session);
                         sw.Stop();
+
                         statusStrip1.Invoke((Action)(() =>
                         {
+                            label1.Text = "pos: " + span.ToString();
                             toolStripStatusLabel1.Text = $"inference time: {sw.ElapsedMilliseconds}ms";
+                            toolStripStatusLabel2.Text = $"frame time: {ms1}ms";
                         }));
 
                         var gr = rr.Item2;
@@ -178,14 +202,15 @@ namespace Retina
                         {
                             gr.DrawString(span.ToString(), new Font("Arial", 12), Brushes.White, 10, 10);
                         }
-                        if (out_vid == null && checkBox5.Checked)
+                        if (WriteVideoEnabled)
                         {
-                            out_vid = new VideoWriter(outputFileName, FourCC.XVID, ofps, new OpenCvSharp.Size(cap.FrameWidth, cap.FrameHeight));
-                        }
-                        if (checkBox5.Checked && out_vid != null)
-                        {
+                            if (out_vid == null)
+                            {
+                                out_vid = new VideoWriter(outputFileName, FourCC.XVID, ofps < 0.5 ? 30 : ofps, new OpenCvSharp.Size(cap.FrameWidth, cap.FrameHeight));
+                            }
                             out_vid.Write(BitmapConverter.ToMat(bmp));
                         }
+                      
                         pictureBox1.Image = bmp;
                     }
                     //Thread.Sleep(40);
@@ -194,6 +219,7 @@ namespace Retina
             th.IsBackground = true;
             th.Start();
         }
+        public bool WriteVideoEnabled = false;
 
         int eyeWidth = 8;
         bool faceDetectEnabled = true;
@@ -560,11 +586,62 @@ namespace Retina
             InitSessions();
             open(ofd.FileName);
         }
-    }
-    public class FaceInfo
-    {
-        public string Label;
-        public Mat Mat;
-        public Rect2f Rect;
+
+        private void checkBox5_CheckedChanged(object sender, EventArgs e)
+        {
+            WriteVideoEnabled = checkBox5.Checked;
+        }
+
+        int camW = 800;
+        int camH = 600;
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            switch (comboBox1.SelectedIndex)
+            {
+                case 0:
+                    camW = 640;
+                    camH = 480;
+                    break;
+                case 1:
+                    camW = 800;
+                    camH = 600;
+                    break;
+                case 2:
+                    camW = 1280;
+                    camH = 720;
+                    break;
+                case 3:
+                    camW = 1920;
+                    camH = 1080;
+                    break;
+            }
+        }
+
+        bool camAutoFocus = false;
+        bool camMjpeg = false;
+        private void checkBox9_CheckedChanged(object sender, EventArgs e)
+        {
+            camAutoFocus = checkBox9.Checked;
+        }
+        int camFps = 30;
+        private void numericUpDown3_ValueChanged(object sender, EventArgs e)
+        {
+            camFps = (int)numericUpDown3.Value;
+        }
+
+        private void checkBox10_CheckedChanged(object sender, EventArgs e)
+        {
+            camMjpeg = checkBox10.Checked;
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+
+        }
+        int camIdx = 0;
+        private void numericUpDown4_ValueChanged(object sender, EventArgs e)
+        {
+            camIdx = (int)numericUpDown4.Value;
+        }
     }
 }
