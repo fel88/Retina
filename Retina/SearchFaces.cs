@@ -1,12 +1,15 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using OpenCvSharp;
+using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Retina
@@ -28,23 +31,51 @@ namespace Retina
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        bool SingleMatProcess(Mat mat, InferenceSession session, FileInfo item)
+        {
+            var rr = GetFaces(mat, session);
+            var ret = (rr != null && rr.Select(z => z.Face).Intersect(facesToSearch).Any());
+            if (ret)
+            {
+                listView1.Invoke((Action)(() =>
+                    {
+                        listView1.Items.Add(new ListViewItem(new string[] { item.Name, string.Join(", ", rr.Where(z => facesToSearch.Contains(z.Face)).Select(z => z.Face.Label)) })
+                        {
+                            Tag = new SearchFaceResult()
+                            {
+                                FilePath = item.FullName,
+                                Target = mat.Clone(),
+                                Faces = rr
+                            }
+                        });
+
+                    }));
+            }
+            return ret;
+        }
+
+        private async void button1_Click(object sender, EventArgs e)
         {
             var d = new DirectoryInfo(textBox1.Text);
-
-            Thread th = new Thread(() =>
+            int cntr = 0;
+            int cntr2 = 0;
+            int total = 0;
+            stopSearch = false;
+            button1.Enabled = false;
+            await Task.Run(() =>
             {
-                int cntr = 0;
-                int cntr2 = 0;
-                int total = 0;
-                stopSearch = false;
-
+                List<string> exts = new List<string>() { "jpg", "png", "bmp" };
+                List<string> vidExts = new List<string>() { "mp4", "avi" };
+                if (includeVideos)
+                {
+                    exts.AddRange(vidExts);
+                }
                 foreach (var item in d.GetFiles())
                 {
                     if (stopSearch) break;
 
                     var path = item.FullName;
-                    string[] exts = { "jpg", "png", "bmp" };
+
                     if (exts.Any(z => path.EndsWith(z)))
                     {
                         total++;
@@ -52,29 +83,44 @@ namespace Retina
                 }
                 if (stopSearch) return;
                 var session = new InferenceSession("nets\\FaceDetector.onnx");
-
+                                
                 foreach (var item in d.GetFiles())
                 {
                     if (stopSearch) break;
 
                     var path = item.FullName;
-                    string[] exts = { "jpg", "png", "bmp" };
+
                     if (exts.Any(z => path.EndsWith(z)))
                     {
-                        var mat = Cv2.ImRead(path);
-
-                        var rr = GetFaces(mat, session);
-                        if (rr != null && rr.Select(z => z.Face).Intersect(facesToSearch).Any())
-                        {
-                            listView1.Invoke((Action)(() =>
+                        if (vidExts.Any(z => path.EndsWith(z)))
+                        {                            
+                            var b = File.ReadAllBytes(path);
+                            Mat mat = new Mat();                         
+                            
+                            using (var cap = new VideoCapture(path))
                             {
-                                listView1.Items.Add(new ListViewItem(new string[] { item.Name, string.Join(", ", rr.Where(z => facesToSearch.Contains(z.Face)).Select(z => z.Face.Label)) }) { Tag = new SearchFaceResult() { FilePath = item.FullName, Faces = rr } });
+                                int frame = 0;
+                                while (cap.Read(mat))
+                                {
+                                    toolStripStatusLabel2.Text = path + $" (frame: {frame})";
 
-                            }));
+                                    frame++;
+                                    if (videoFramesLimitEnabled && frame > framesLimit)
+                                        break;
 
+                                    if (SingleMatProcess(mat, session, item))
+                                        break;
+
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var mat = Cv2.ImRead(path);
+                            SingleMatProcess(mat, session, item);
+                            mat.Dispose();
                             cntr++;
                         }
-                        mat.Dispose();
                         GC.Collect();
 
                     }
@@ -85,13 +131,12 @@ namespace Retina
                     }));
                 }
             });
-            th.IsBackground = true;
-            th.Start();
+            button1.Enabled = true;
 
         }
+
         OpenCvSharp.Dnn.Net detector;
 
-       
         RetinaFace face = new RetinaFace();
         public RectangleF[] GetFacesSSD(Mat img)
         {
@@ -283,7 +328,8 @@ namespace Retina
         {
             if (listView1.SelectedItems.Count == 0) return;
             var sfr = listView1.SelectedItems[0].Tag as SearchFaceResult;
-            pictureBox1.Image = Bitmap.FromFile(sfr.FilePath);
+            //pictureBox1.Image = Bitmap.FromFile(sfr.FilePath);
+            pictureBox1.Image = sfr.Target.ToBitmap();
         }
 
         List<RecFaceInfo> facesToSearch = new List<RecFaceInfo>();
@@ -317,16 +363,29 @@ namespace Retina
         {
             faceRecognitionThreshold = (double)numericUpDown1.Value / 100.0;
         }
-    }
 
-    public class RecognizedFaceInfo : FaceInfo
-    {
-        public RecFaceInfo Face;
+        private void button4_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            if (ofd.ShowDialog() != DialogResult.OK) return;
+            textBox1.Text = new FileInfo(ofd.FileName).Directory.FullName;
+        }
+        bool includeVideos = false;
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            includeVideos = checkBox1.Checked;
+        }
+        bool videoFramesLimitEnabled = false;
+        int framesLimit = 150;
 
-    }
-    public class SearchFaceResult
-    {
-        public string FilePath;
-        public RecognizedFaceInfo[] Faces;
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            videoFramesLimitEnabled = checkBox2.Checked;
+        }
+
+        private void numericUpDown2_ValueChanged(object sender, EventArgs e)
+        {
+            framesLimit = (int)numericUpDown2.Value;
+        }
     }
 }
