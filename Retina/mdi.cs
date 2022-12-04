@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using UniCutSheetRecognizerPlugin;
 
 namespace Retina
 {
@@ -53,6 +54,13 @@ namespace Retina
         private void imageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ImageSearch sf = new ImageSearch();
+            sf.MdiParent = this;
+            sf.Show();
+        }
+
+        private void toolStripButton4_Click_1(object sender, EventArgs e)
+        {
+            CalibratingWindow sf = new CalibratingWindow();
             sf.MdiParent = this;
             sf.Show();
         }

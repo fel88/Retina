@@ -2,12 +2,8 @@
 using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -18,6 +14,79 @@ namespace Retina
         public mixer()
         {
             InitializeComponent();
+            pictureBox1.Paint += PictureBox1_Paint;
+            ctx.Init(pictureBox1);
+            Load += Form1_Load;
+            pictureBox1.MouseDown += PictureBox1_MouseDown;
+            pictureBox1.MouseUp += PictureBox1_MouseUp;
+        }
+
+        private void PictureBox1_MouseUp(object sender, MouseEventArgs e)
+        {
+            hoveredLineIdx = null;
+        }
+
+        private void PictureBox1_MouseDown(object sender, MouseEventArgs e)
+        {
+            hoveredLineIdx = null;
+            var pos = pictureBox1.PointToClient(Cursor.Position);
+
+            var bt = ctx.BackTransform(pos);
+            if (e.Button == MouseButtons.Left)
+            {
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    int item = lines[i];
+                    var diff = Math.Abs(item - bt.Y);
+                    if (diff < 5)
+                    {                     
+                        hoveredLineIdx = i;
+                    }
+                }
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            mf = new MessageFilter();
+            Application.AddMessageFilter(mf);
+        }
+
+
+        MessageFilter mf = null;
+        DrawingContext ctx = new DrawingContext();
+
+
+        private void PictureBox1_Paint(object sender, PaintEventArgs e)
+        {
+            if (!calibrateMode)
+                return;
+
+            ctx.gr = e.Graphics;
+            e.Graphics.Clear(Color.White);
+            ctx.DrawLine(Pens.Red, new PointF(0, 0), new PointF(100, 0));
+            ctx.DrawLine(Pens.Blue, new PointF(0, 0), new PointF(0, 100));
+
+            var z = ctx.Transform(new PointF(0, 0));
+            if (renderImg != null)
+            {
+                ctx.gr.DrawImage(renderImg, z.X, z.Y, renderImg.Width * ctx.zoom, renderImg.Height * ctx.zoom);
+            }
+
+            foreach (var item in lines)
+            {
+                var t0 = ctx.Transform(new PointF(-10000, item));
+                Pen pen = new Pen(Color.Blue);
+                pen.DashPattern = new float[] { 5, 5 };
+                
+                ctx.gr.DrawLine(pen, -1000, t0.Y, 5000, t0.Y);
+
+                pen = new Pen(Color.White);
+                pen.DashPattern = new float[] { 5, 5 };
+                pen.DashOffset = 5;
+
+                ctx.gr.DrawLine(pen, -1000, t0.Y, 5000, t0.Y);
+            }
         }
 
         private async void button1_Click(object sender, EventArgs e)
@@ -40,7 +109,7 @@ namespace Retina
                             var nfn = Path.GetFileNameWithoutExtension(fn) + "_" + ii + Path.GetExtension(fn);
                             if (!File.Exists(nfn))
                             {
-                                fn = nfn; 
+                                fn = nfn;
                                 break;
                             }
                             ii++;
@@ -69,6 +138,7 @@ namespace Retina
                 //for (int i = 0; i < cnt; i++)
                 Mat mat1 = new Mat();
                 Mat mat2 = new Mat();
+                timer1.Enabled = false;
                 while (true)
                 {
                     if (fixedFrames)
@@ -80,13 +150,26 @@ namespace Retina
                         break;
                     i++;
 
+                    if (i % 10 == 0) GC.Collect();
+
                     v1.Read(mat1);
                     v2.Read(mat2);
                     Mat res = new Mat();
                     Cv2.HConcat(new[] { mat1, mat2 }, res);
-                    pictureBox1.Image = res.ToBitmap();
+
+
                     out_vid.Write(res);
                     // out_vid.Write(mat2);
+                    if (calibrateMode)
+                    {
+                        renderImg = res.ToBitmap();
+                        render();
+                    }
+                    else
+                    {
+                        pictureBox1.Image = res.ToBitmap();
+                    }
+
                     if (fixedFrames)
                         toolStripStatusLabel1.Text = $"{i} / {cnt}";
                     else
@@ -97,6 +180,8 @@ namespace Retina
             });
             toolStripStatusLabel1.Text = "done!";
         }
+
+        Bitmap renderImg;
 
         VideoCapture openCam(int idx, bool mjpeg, bool autoFocus, int w, int h)
         {
@@ -128,7 +213,7 @@ namespace Retina
         }
 
         int cam1Idx = 0;
-        int cam2Idx = 0;
+        int cam2Idx = 1;
         private void numericUpDown2_ValueChanged(object sender, EventArgs e)
         {
             cam1Idx = (int)numericUpDown2.Value;
@@ -137,6 +222,57 @@ namespace Retina
         private void numericUpDown3_ValueChanged(object sender, EventArgs e)
         {
             cam2Idx = (int)numericUpDown3.Value;
+        }
+
+        private void addCalibrateLineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        List<int> lines = new List<int>();
+
+        private void addToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var c = pictureBox1.PointToClient(Cursor.Position);
+            lines.Add(c.Y);
+        }
+
+        private void deleteToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+        int? hoveredLineIdx = null;
+        void render()
+        {
+            var pos = pictureBox1.PointToClient(Cursor.Position);
+            var bt = ctx.BackTransform(pos);
+            Cursor = Cursors.Default;
+          
+           
+
+            if (hoveredLineIdx == null) ctx.UpdateDrag();
+            else
+            {
+                Cursor = Cursors.HSplit;
+                lines[hoveredLineIdx.Value] = (int)bt.Y;
+            }
+
+            pictureBox1.Invalidate();
+        }
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            render();
+        }
+
+        bool calibrateMode = false;
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            calibrateMode = comboBox1.SelectedIndex == 1;
         }
     }
 }

@@ -239,12 +239,21 @@
     <Compile Include="AddReferenceFace.Designer.cs">
       <DependentUpon>AddReferenceFace.cs</DependentUpon>
     </Compile>
+    <Compile Include="CalibratingWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CalibratingWindow.Designer.cs">
+      <DependentUpon>CalibratingWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DrawingContext.cs" />
+    <Compile Include="EventWrapper.cs" />
     <Compile Include="ImageSearch.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ImageSearch.Designer.cs">
       <DependentUpon>ImageSearch.cs</DependentUpon>
     </Compile>
+    <Compile Include="MessageFilter.cs" />
     <Compile Include="mixer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -294,6 +303,9 @@
     </Compile>
     <EmbeddedResource Include="AddReferenceFace.resx">
       <DependentUpon>AddReferenceFace.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CalibratingWindow.resx">
+      <DependentUpon>CalibratingWindow.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FaceRecognition.resx">
       <DependentUpon>FaceRecognition.cs</DependentUpon>
