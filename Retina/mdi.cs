@@ -64,6 +64,13 @@ namespace Retina
             sf.MdiParent = this;
             sf.Show();
         }
+
+        private void toolStripButton6_Click(object sender, EventArgs e)
+        {
+            StereoCalibrate sf = new StereoCalibrate();
+            sf.MdiParent = this;
+            sf.Show();
+        }
     }
 }
 
