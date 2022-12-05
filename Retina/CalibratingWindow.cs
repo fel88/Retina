@@ -3,6 +3,7 @@ using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -536,6 +537,18 @@ namespace UniCutSheetRecognizerPlugin
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
             autoCaptureEnabled = checkBox2.Checked;
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            pictureBox1.Image.Save("temp.jpg");
+            Process.Start("temp.jpg");
+        }
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            pictureBox2.Image.Save("temp.jpg");
+            Process.Start("temp.jpg");
         }
     }
 }

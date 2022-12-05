@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -121,10 +122,10 @@ namespace Retina
                 Vec3d[] rvecs2;
                 Vec3d[] tvecs1;
                 Vec3d[] tvecs2;
-                var camMtx1 = new double[3, 3];
-                var camMtx2 = new double[3, 3];
-                var distCoeffs1 = new double[5];
-                var distCoeffs2 = new double[5];
+                camMtx1 = new double[3, 3];
+                camMtx2 = new double[3, 3];
+                distCoeffs1 = new double[5];
+                distCoeffs2 = new double[5];
                 var d = Cv2.CalibrateCamera(
                     objpoints.Select(z => z.ToList()).ToList(),
                     imgpoints.Select(z => z.ToList()).ToList(),
@@ -146,7 +147,7 @@ namespace Retina
                 var ims = new OpenCvSharp.Size(imgw, imgh);
                 Mat[] cameraMatrix = new Mat[2];
                 Mat[] distCoeffs = new Mat[2];
-            
+
 
                 var rr = OpenCvSharp.Cv2.StereoCalibrate(objpoints,
                     imgpoints,
@@ -168,10 +169,10 @@ namespace Retina
                  criteria);
 
 
-                Mat R1 = new Mat();
-                Mat R2 = new Mat();
-                Mat P1 = new Mat();
-                Mat P2 = new Mat();
+                R1 = new Mat();
+                R2 = new Mat();
+                P1 = new Mat();
+                P2 = new Mat();
                 Mat Q = new Mat();
 
                 Cv2.StereoRectify(
@@ -181,10 +182,18 @@ namespace Retina
                     Mat.FromArray(distCoeffs2),
                     new OpenCvSharp.Size(imgw, imgh), R, T, R1, R2, P1, P2, Q);
 
+                Rect roi1;
+                Rect roi2;
+                opc1 = Cv2.GetOptimalNewCameraMatrix(Mat.FromArray(camMtx1), Mat.FromArray(distCoeffs1), ims, 1, ims, out roi1);
+                opc2 = Cv2.GetOptimalNewCameraMatrix(Mat.FromArray(camMtx2), Mat.FromArray(distCoeffs2), ims, 1, ims, out roi2);
 
-                Cv2.InitUndistortRectifyMap(Mat.FromArray(camMtx1),
+                bool newOpt = checkBox3.Checked;
+                Cv2.InitUndistortRectifyMap(
+                     newOpt ? opc1 : Mat.FromArray(camMtx1),
                     Mat.FromArray(distCoeffs1), R1, P1, ims, MatType.CV_32FC1, map1, map2);
-                Cv2.InitUndistortRectifyMap(Mat.FromArray(camMtx2),
+
+                Cv2.InitUndistortRectifyMap(
+                    newOpt ? opc2 : Mat.FromArray(camMtx2),
                     Mat.FromArray(distCoeffs2), R2, P2, ims, MatType.CV_32FC1, map11, map22);
 
 
@@ -193,10 +202,21 @@ namespace Retina
             toolStripStatusLabel1.Text = "calibration complete";
         }
 
+        double[,] camMtx1;
+        double[,] camMtx2;
+        double[] distCoeffs1;
+        double[] distCoeffs2;
+        Mat P1;
+        Mat P2;
+        Mat R1;
+        Mat R2;
+        Mat opc1;
+        Mat opc2;
         Mat map1 = new Mat();
         Mat map2 = new Mat();
         Mat map11 = new Mat();
         Mat map22 = new Mat();
+
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
             try
@@ -212,7 +232,7 @@ namespace Retina
                         pictureBox1.Image = res.ToBitmap();
                         res = m.Right.Remap(map11, map22);
                         pictureBox2.Image = res.ToBitmap();
-                    }                  
+                    }
 
                 }
             }
@@ -307,7 +327,140 @@ namespace Retina
                 }
             dst.SaveImage("combined.jpg");
             Process.Start("combined.jpg");
+        }
 
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            StringBuilder sb = new StringBuilder();
+            var mat = (listView1.Items[0].Tag as StereoPair).Left;
+            sb.AppendLine("[width]");
+            sb.AppendLine(mat.Width.ToString());
+            sb.AppendLine("[height]");
+            sb.AppendLine(mat.Height.ToString());
+            sb.AppendLine("[distortion_1]");
+            foreach (var item in distCoeffs1)
+            {
+                sb.Append(item + " ");
+            }
+            sb.AppendLine();
+            sb.AppendLine("[distortion_2]");
+            foreach (var item in distCoeffs2)
+            {
+                sb.Append(item + " ");
+            }
+            sb.AppendLine();
+
+            sb.AppendLine("[camera_1]");
+            for (int i = 0; i < camMtx1.GetLength(0); i++)
+            {
+                for (int j = 0; j < camMtx1.GetLength(1); j++)
+                {
+                    var p = camMtx1[i, j];
+                    sb.Append(p + " ");
+                }
+                sb.AppendLine();
+            }
+            sb.AppendLine();
+            sb.AppendLine("[camera_2]");
+            for (int i = 0; i < camMtx2.GetLength(0); i++)
+            {
+                for (int j = 0; j < camMtx2.GetLength(1); j++)
+                {
+                    var p = camMtx2[i, j];
+                    sb.Append(p + " ");
+                }
+                sb.AppendLine();
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("[projection_1]");
+            for (int i = 0; i < P1.Rows; i++)
+            {
+                for (int j = 0; j < P1.Cols; j++)
+                {
+                    var p = P1.At<double>(i, j);
+                    sb.Append(p + " ");
+                }
+                sb.AppendLine();
+            }
+            sb.AppendLine();
+            sb.AppendLine("[projection_2]");
+            for (int i = 0; i < P2.Rows; i++)
+            {
+                for (int j = 0; j < P2.Cols; j++)
+                {
+                    var p = P2.At<double>(i, j);
+                    sb.Append(p + " ");
+                }
+                sb.AppendLine();
+            }
+            sb.AppendLine();
+            sb.AppendLine("[R1_1]");
+            for (int i = 0; i < R1.Rows; i++)
+            {
+                for (int j = 0; j < R1.Cols; j++)
+                {
+                    var p = R1.At<double>(i, j);
+                    sb.Append(p + " ");
+                }
+                sb.AppendLine();
+            }
+            sb.AppendLine();
+            sb.AppendLine("[R2_1]");
+            for (int i = 0; i < R2.Rows; i++)
+            {
+                for (int j = 0; j < R2.Cols; j++)
+                {
+                    var p = R2.At<double>(i, j);
+                    sb.Append(p + " ");
+                }
+                sb.AppendLine();
+            }
+            Clipboard.SetText(sb.ToString());
+
+            MessageBox.Show("koef saved to clipboard.", Text);
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            checkBox1.Checked = !checkBox1.Checked;
+            if (listView1.SelectedItems.Count == 0) return;
+            if (listView1.SelectedItems[0].Tag is StereoPair m)
+            {
+                pictureBox1.Image = m.Left.ToBitmap();
+                pictureBox2.Image = m.Right.ToBitmap();
+                if (checkBox1.Checked)
+                {
+                    var res = m.Left.Remap(map1, map2);
+                    pictureBox1.Image = res.ToBitmap();
+                    res = m.Right.Remap(map11, map22);
+                    pictureBox2.Image = res.ToBitmap();
+                }
+
+            }
+        }
+        private void DeleteSelectedPhotos()
+        {
+            try
+            {
+                if (listView1.SelectedItems.Count == 0) return;
+                var items = listView1.SelectedItems;
+                foreach (var item in items)
+                {
+                    ListViewItem lvItem = (ListViewItem)item;
+                    listView1.Items.Remove(lvItem);
+                }
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+        }
+        private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DeleteSelectedPhotos();
         }
     }
 }
