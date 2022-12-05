@@ -27,7 +27,7 @@ namespace UniCutSheetRecognizerPlugin
 
         double calibrationAccuracy;
 
-        
+
         private string doubleToString(double d)
         {
             if (double.IsNaN(d)) return string.Empty;
@@ -35,7 +35,7 @@ namespace UniCutSheetRecognizerPlugin
         }
 
 
-        
+
         private void CalibrateWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
             for (int i = 0; i < listView1.Items.Count; i++)
@@ -58,7 +58,7 @@ namespace UniCutSheetRecognizerPlugin
         }
 
         Mat projMtx = null;
-        private void tsbRecalibrate_Click(object sender, EventArgs e)
+        private async void tsbRecalibrate_Click(object sender, EventArgs e)
         {
             if (listView1.Items.Count == 0)
             {
@@ -66,117 +66,126 @@ namespace UniCutSheetRecognizerPlugin
                 return;
             }
 
-            List<Point2f[]> imgpoints = new List<Point2f[]>();
-            List<Point3f[]> objpoints = new List<Point3f[]>();
+            toolStripButton2.Enabled = false;
 
-            int patternw = chessW;
-            int patternh = chessH;
-            List<Point3f> objp = new List<Point3f>();
-            for (int j = 0; j < patternh; j++)
-            {
-                for (int i = 0; i < patternw; i++)
-                {
-                    objp.Add(new Point3f(i, j, 0));
-                }
-            }
-            TermCriteria criteria = new TermCriteria(CriteriaTypes.Eps | CriteriaTypes.MaxIter, 30, 0.001);
+            await Task.Run(() =>
+               {
 
-            int imgw = 0;
-            int imgh = 0;
-            int cnt = 0;
-            for (int i = 0; i < listView1.Items.Count; i++)
-            {
-                var item = listView1.Items[i];
+                   List<Point2f[]> imgpoints = new List<Point2f[]>();
+                   List<Point3f[]> objpoints = new List<Point3f[]>();
 
-                var b = listView1.Items[i].Tag as Mat;
+                   int patternw = chessW;
+                   int patternh = chessH;
+                   List<Point3f> objp = new List<Point3f>();
+                   for (int j = 0; j < patternh; j++)
+                   {
+                       for (int i = 0; i < patternw; i++)
+                       {
+                           objp.Add(new Point3f(i, j, 0));
+                       }
+                   }
+                   TermCriteria criteria = new TermCriteria(CriteriaTypes.Eps | CriteriaTypes.MaxIter, 30, 0.001);
 
-                imgw = b.Width;
-                imgh = b.Height;
-                var mat = b;
+                   int imgw = 0;
+                   int imgh = 0;
+                   int cnt = 0;
+                   for (int i = 0; i < listView1.Items.Count; i++)
+                   {
+                       var item = listView1.Items[i];
 
-                var gray = mat.CvtColor(ColorConversionCodes.BGR2GRAY);
-                List<Point2f> corners = new List<Point2f>();
-                var out1 = OutputArray.Create(corners);
+                       var b = listView1.Items[i].Tag as Mat;
 
+                       imgw = b.Width;
+                       imgh = b.Height;
+                       var mat = b;
 
-                bool res = false;
-
-                if (comboBox1.SelectedIndex == 0)
-                {
-                    res = Cv2.FindChessboardCorners(gray, new OpenCvSharp.Size(chessW, chessH), out1);
-                }
-                if (comboBox1.SelectedIndex == 1)
-                {
-                    res = Cv2.FindCirclesGrid(gray, new OpenCvSharp.Size(chessW, chessH), out1);
-                }
-                item.SubItems[1].Text = res ? "pattern found" : "pattern not found";
-                item.BackColor = res ? Color.LightBlue : Color.Pink;
-                if (res)
-                {
-                    var corners2 = Cv2.CornerSubPix(gray, corners, new OpenCvSharp.Size(11, 11), new OpenCvSharp.Size(-1, -1), criteria);
-                    objpoints.Add(objp.ToArray());
-                    imgpoints.Add(corners2.ToArray());
-                    cnt++;
-                }
-            }
-            if (imgpoints.Count == 0)
-            {
-                MessageBox.Show("calibration can't be done: no one pattern was found. ", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (cnt < 5)
-            {
-                MessageBox.Show("calibration can't be done: minimum 5 images required. ", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            Vec3d[] rvecs;
-            Vec3d[] tvecs;
-            camMtx = new double[3, 3];
-            distCoeffs = new double[5];
-            var d = Cv2.CalibrateCamera(
-                objpoints.Select(z => z.ToList()).ToList(),
-                imgpoints.Select(z => z.ToList()).ToList(),
-                new OpenCvSharp.Size(imgw, imgh),
-                 camMtx, distCoeffs, out rvecs, out tvecs, CalibrationFlags.None);
+                       var gray = mat.CvtColor(ColorConversionCodes.BGR2GRAY);
+                       List<Point2f> corners = new List<Point2f>();
+                       var out1 = OutputArray.Create(corners);
 
 
+                       bool res = false;
 
-            /*If you are using cameraCalibrate(), you must be getting mtx, rvecs and tvecs. 
-             * R is 3x1 which you need to convert to 3x3 using Rodrigues method of opencv.
-             
-             R = cv2.Rodrigues(rvecs[0])[0]
-t = tvecs[0]
-Rt = np.concatenate([R,t], axis=-1) # [R|t]
-P = np.matmul(mtx,Rt) # A[R|t]*/
-            double[] outr = null;
-            double[,] jac = null;
-            Mat outr2 = new Mat();
-            Cv2.Rodrigues(rvecs[0], outr2);
+                       if (comboBox1.SelectedIndex == 0)
+                       {
+                           res = Cv2.FindChessboardCorners(gray, new OpenCvSharp.Size(chessW, chessH), out1);
+                       }
+                       if (comboBox1.SelectedIndex == 1)
+                       {
+                           res = Cv2.FindCirclesGrid(gray, new OpenCvSharp.Size(chessW, chessH), out1);
+                       }
+                       item.SubItems[1].Text = res ? "pattern found" : "pattern not found";
+                       item.BackColor = res ? Color.LightBlue : Color.Pink;
+                       if (res)
+                       {
+                           var corners2 = Cv2.CornerSubPix(gray, corners, new OpenCvSharp.Size(11, 11), new OpenCvSharp.Size(-1, -1), criteria);
+                           objpoints.Add(objp.ToArray());
+                           imgpoints.Add(corners2.ToArray());
+                           cnt++;
+                       }
+                   }
+                   if (imgpoints.Count == 0)
+                   {
+                       MessageBox.Show("calibration can't be done: no one pattern was found. ", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                       return;
+                   }
+                   if (cnt < 5)
+                   {
+                       MessageBox.Show("calibration can't be done: minimum 5 images required. ", Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                       return;
+                   }
 
-            var R = outr2;
-            var t = tvecs[0];
-            var Rt = concat(R, t);
-            projMtx = Matmul(camMtx, Rt);
+                   Vec3d[] rvecs;
+                   Vec3d[] tvecs;
+                   camMtx = new double[3, 3];
+                   distCoeffs = new double[5];
+                   var d = Cv2.CalibrateCamera(
+                       objpoints.Select(z => z.ToList()).ToList(),
+                       imgpoints.Select(z => z.ToList()).ToList(),
+                       new OpenCvSharp.Size(imgw, imgh),
+                        camMtx, distCoeffs, out rvecs, out tvecs, CalibrationFlags.None);
 
-            // error calc
-            double mean_error = 0;
 
-            for (int i = 0; i < objpoints.Count; i++)
-            {
-                Mat imgpoints2 = new Mat();
-                var rvec1 = rvecs.Select(z => new double[] { z.Item0, z.Item1, z.Item2 }).ToArray();
-                var tvec1 = tvecs.Select(z => new double[] { z.Item0, z.Item1, z.Item2 }).ToArray();
 
-                Cv2.ProjectPoints(InputArray.Create(objpoints[i]), InputArray.Create(rvec1[i]), InputArray.Create(tvec1[i]), InputArray.Create(camMtx), InputArray.Create(distCoeffs), imgpoints2);
-                var error = Cv2.Norm(InputArray.Create(imgpoints[i]), InputArray.Create(imgpoints2), NormTypes.L2) / imgpoints2.Width;
-                mean_error += error;
-            }
+                   /*If you are using cameraCalibrate(), you must be getting mtx, rvecs and tvecs. 
+                    * R is 3x1 which you need to convert to 3x3 using Rodrigues method of opencv.
 
-            double calibAccuracy = mean_error / objpoints.Count;
-            calibrationAccuracy = calibAccuracy;
-            lCalibAccuracy.Text = "calibration error: " + doubleToString(calibAccuracy);
-            MessageBox.Show("calibration succesfully done.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    R = cv2.Rodrigues(rvecs[0])[0]
+       t = tvecs[0]
+       Rt = np.concatenate([R,t], axis=-1) # [R|t]
+       P = np.matmul(mtx,Rt) # A[R|t]*/
+                   double[] outr = null;
+                   double[,] jac = null;
+                   Mat outr2 = new Mat();
+                   Cv2.Rodrigues(rvecs[0], outr2);
+
+                   var R = outr2;
+                   var t = tvecs[0];
+                   var Rt = concat(R, t);
+                   projMtx = Matmul(camMtx, Rt);
+
+                   // error calc
+                   double mean_error = 0;
+
+                   for (int i = 0; i < objpoints.Count; i++)
+                   {
+                       Mat imgpoints2 = new Mat();
+                       var rvec1 = rvecs.Select(z => new double[] { z.Item0, z.Item1, z.Item2 }).ToArray();
+                       var tvec1 = tvecs.Select(z => new double[] { z.Item0, z.Item1, z.Item2 }).ToArray();
+
+                       Cv2.ProjectPoints(InputArray.Create(objpoints[i]), InputArray.Create(rvec1[i]), InputArray.Create(tvec1[i]), InputArray.Create(camMtx), InputArray.Create(distCoeffs), imgpoints2);
+                       var error = Cv2.Norm(InputArray.Create(imgpoints[i]), InputArray.Create(imgpoints2), NormTypes.L2) / imgpoints2.Width;
+                       mean_error += error;
+                   }
+                   double calibAccuracy = mean_error / objpoints.Count;
+                   calibrationAccuracy = calibAccuracy;
+                   lCalibAccuracy.Text = "calibration error: " + doubleToString(calibAccuracy);
+                   MessageBox.Show("calibration succesfully done.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+               });
+            toolStripButton2.Enabled = true;
+
+
         }
 
         private Mat Matmul(double[,] camMtx, Mat rt)
@@ -378,7 +387,7 @@ P = np.matmul(mtx,Rt) # A[R|t]*/
                 DeleteSelectedPhotos();
             }
         }
-        
+
         private void DeleteSelectedPhotos()
         {
             try
@@ -421,7 +430,7 @@ P = np.matmul(mtx,Rt) # A[R|t]*/
                 bitem.Dispose();
             }
         }
-        
+
 
         private void toolStripButton1_Click_1(object sender, EventArgs e)
         {
@@ -430,6 +439,7 @@ P = np.matmul(mtx,Rt) # A[R|t]*/
         VideoCapture cap = null;
         int resW = 1920;
         int resH = 1080;
+        DateTime lastCaptureTime;
         private void timer1_Tick(object sender, EventArgs e)
         {
             if (cap == null)
@@ -438,9 +448,8 @@ P = np.matmul(mtx,Rt) # A[R|t]*/
                 cap.Set(VideoCaptureProperties.FrameWidth, resW);
                 cap.Set(VideoCaptureProperties.FrameHeight, resH);
 
-                /*cap.Set(VideoCaptureProperties.FrameWidth, 800);
-                cap.Set(VideoCaptureProperties.FrameHeight, 600);*/
                 cap.Set(VideoCaptureProperties.FourCC, FourCC.MJPG);
+                cap.Set(VideoCaptureProperties.AutoFocus, autoFocusEnabled ? 1 : 0);
             }
 
             Mat mat = new Mat();
@@ -459,6 +468,11 @@ P = np.matmul(mtx,Rt) # A[R|t]*/
             var tmat = mat.Clone();
             if (res)
             {
+                if (autoCaptureEnabled && (DateTime.Now - lastCaptureTime).TotalSeconds > 3)
+                {
+                    lastCaptureTime = DateTime.Now;
+                    NewImage(mat);
+                }
                 var hull = Cv2.ConvexHull(corners);
 
                 tmat.DrawContours(new[] { hull.Select(z => new OpenCvSharp.Point(z.X, z.Y)).ToArray() }, 0, Scalar.Green);
@@ -479,6 +493,7 @@ P = np.matmul(mtx,Rt) # A[R|t]*/
                 }
             }
             pictureBox1.Image = tmat.ToBitmap();
+            GC.Collect();
         }
 
         int chessW = 9;
@@ -511,6 +526,16 @@ P = np.matmul(mtx,Rt) # A[R|t]*/
         private void numericUpDown2_ValueChanged(object sender, EventArgs e)
         {
             chessH = (int)numericUpDown2.Value;
+        }
+        bool autoFocusEnabled = false;
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            autoFocusEnabled = checkBox1.Checked;
+        }
+        bool autoCaptureEnabled = false;
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
+        {
+            autoCaptureEnabled = checkBox2.Checked;
         }
     }
 }

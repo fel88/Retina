@@ -4,6 +4,7 @@ using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -25,12 +26,17 @@ namespace Retina
 
             detector = OpenCvSharp.Dnn.CvDnn.ReadNetFromCaffe(config_path, face_model_path);
 
+            UpdateFacesList();
+        }
+
+        void UpdateFacesList()
+        {
+            listView2.Items.Clear();
             foreach (var item in FaceNet.Faces)
             {
                 listView2.Items.Add(new ListViewItem(new string[] { item.Label }) { Tag = item });
             }
         }
-
         bool SingleMatProcess(Mat mat, InferenceSession session, FileInfo item)
         {
             var rr = GetFaces(mat, session);
@@ -54,6 +60,7 @@ namespace Retina
             return ret;
         }
 
+        Random rand = new Random();
         private async void button1_Click(object sender, EventArgs e)
         {
             var d = new DirectoryInfo(textBox1.Text);
@@ -83,7 +90,7 @@ namespace Retina
                 }
                 if (stopSearch) return;
                 var session = new InferenceSession("nets\\FaceDetector.onnx");
-                                
+
                 foreach (var item in d.GetFiles())
                 {
                     if (stopSearch) break;
@@ -93,15 +100,27 @@ namespace Retina
                     if (exts.Any(z => path.EndsWith(z)))
                     {
                         if (vidExts.Any(z => path.EndsWith(z)))
-                        {                            
+                        {
                             var b = File.ReadAllBytes(path);
-                            Mat mat = new Mat();                         
-                            
+                            Mat mat = new Mat();
+
                             using (var cap = new VideoCapture(path))
                             {
+                                var ofps = cap.Get(VideoCaptureProperties.Fps);
+
                                 int frame = 0;
+
                                 while (cap.Read(mat))
                                 {
+                                    if (stopSearch) break;
+                                    if (randomLimitMode)
+                                    {
+                                        var frm = cap.Get(VideoCaptureProperties.FrameCount);
+                                        var secs = (frm / ofps) * 1000;
+                                        var forwPosPercetange = rand.NextDouble();
+                                        cap.Set(VideoCaptureProperties.PosMsec, forwPosPercetange * secs);
+                                    }
+
                                     toolStripStatusLabel2.Text = path + $" (frame: {frame})";
 
                                     frame++;
@@ -386,6 +405,30 @@ namespace Retina
         private void numericUpDown2_ValueChanged(object sender, EventArgs e)
         {
             framesLimit = (int)numericUpDown2.Value;
+        }
+
+        bool randomLimitMode = false;
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            randomLimitMode = comboBox1.SelectedIndex == 1;
+        }
+
+        private void listView2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void updateToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UpdateFacesList();
+        }
+
+        private void listView1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0) return;
+            var sfr = listView1.SelectedItems[0].Tag as SearchFaceResult;
+            
+            Process.Start(sfr.FilePath);
         }
     }
 }
