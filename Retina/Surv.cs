@@ -51,6 +51,9 @@ namespace Retina
 
                     lock (lock1)
                     {
+                        if (lastMat != null)
+                            lastMat.Dispose();
+
                         lastMat = mat.Clone();
                     }
                 }
@@ -62,14 +65,19 @@ namespace Retina
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (lastMat != null)
+            if (lastMat == null) 
+                return;
+
+            if (pictureBox1.Image != null)
             {
-                lock (lastMat)
-                {
-                    pictureBox1.Image = BitmapConverter.ToBitmap(lastMat);
-                }
+                pictureBox1.Image.Dispose();
+            }
+            lock (lock1)
+            {
+                pictureBox1.Image = BitmapConverter.ToBitmap(lastMat);
             }
         }
+
         bool webcam = false;
         private void button2_Click(object sender, EventArgs e)
         {

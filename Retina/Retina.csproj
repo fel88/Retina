@@ -18,7 +18,7 @@
     </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -244,6 +244,14 @@
     </Compile>
     <Compile Include="DrawingContext.cs" />
     <Compile Include="EventWrapper.cs" />
+    <Compile Include="HikVision\CHCNetSDK.cs" />
+    <Compile Include="HikVision\PreSet.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="HikVision\PreSet.designer.cs" />
+    <Compile Include="HikVision\Preview.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="ImageSearch.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -316,6 +324,8 @@
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="HikVision\PreSet.resx" />
+    <EmbeddedResource Include="HikVision\Preview.resx" />
     <EmbeddedResource Include="ImageSearch.resx">
       <DependentUpon>ImageSearch.cs</DependentUpon>
     </EmbeddedResource>

@@ -71,6 +71,13 @@ namespace Retina
             sf.MdiParent = this;
             sf.Show();
         }
+
+        private void hikvisionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            PreviewDemo.Preview p = new PreviewDemo.Preview();
+            p.MdiParent = this;
+            p.Show();
+        }
     }
 }
 
