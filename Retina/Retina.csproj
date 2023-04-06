@@ -230,6 +230,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbstractVideoSource.cs" />
     <Compile Include="AddReferenceFace.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -241,6 +242,18 @@
     </Compile>
     <Compile Include="CalibratingWindow.Designer.cs">
       <DependentUpon>CalibratingWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CameraEditDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CameraEditDialog.Designer.cs">
+      <DependentUpon>CameraEditDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Cameras.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Cameras.Designer.cs">
+      <DependentUpon>Cameras.cs</DependentUpon>
     </Compile>
     <Compile Include="DrawingContext.cs" />
     <Compile Include="EventWrapper.cs" />
@@ -258,6 +271,7 @@
     <Compile Include="ImageSearch.Designer.cs">
       <DependentUpon>ImageSearch.cs</DependentUpon>
     </Compile>
+    <Compile Include="IVideoSource.cs" />
     <Compile Include="MessageFilter.cs" />
     <Compile Include="mixer.cs">
       <SubType>Form</SubType>
@@ -293,6 +307,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RecognizedFaceInfo.cs" />
     <Compile Include="RetinaFace.cs" />
+    <Compile Include="RtspCamera.cs" />
     <Compile Include="SearchFaceResult.cs" />
     <Compile Include="SearchFaces.cs">
       <SubType>Form</SubType>
@@ -312,11 +327,19 @@
     <Compile Include="Surv.Designer.cs">
       <DependentUpon>Surv.cs</DependentUpon>
     </Compile>
+    <Compile Include="UsbWebCam.cs" />
+    <Compile Include="VideoFile.cs" />
     <EmbeddedResource Include="AddReferenceFace.resx">
       <DependentUpon>AddReferenceFace.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="CalibratingWindow.resx">
       <DependentUpon>CalibratingWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CameraEditDialog.resx">
+      <DependentUpon>CameraEditDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Cameras.resx">
+      <DependentUpon>Cameras.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FaceRecognition.resx">
       <DependentUpon>FaceRecognition.cs</DependentUpon>

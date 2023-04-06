@@ -16,13 +16,25 @@ namespace Retina
 
         Mat lastMat;
         object lock1 = new object();
+        IVideoSource picked = null;
         private void button1_Click(object sender, EventArgs e)
         {
             //var temp = Environment.GetEnvironmentVariable("OPENCV_FFMPEG_CAPTURE_OPTIONS");
             //Environment.SetEnvironmentVariable("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
             //OpenCvSharp.VideoCapture cap = new OpenCvSharp.VideoCapture(textBox1.Text, VideoCaptureAPIs.FFMPEG);
             OpenCvSharp.VideoCapture cap = null;
-            if (webcam)
+            if (picked != null)
+            {
+                if (picked is RtspCamera r)
+                {
+                    cap = new VideoCapture(r.Source, VideoCaptureAPIs.FFMPEG);
+                }
+                if (picked is VideoFile f)
+                {
+                    cap = new VideoCapture(f.Path, VideoCaptureAPIs.FFMPEG);
+                }
+            }
+            else if (webcam)
             {
                 cap = new VideoCapture(0);
 
@@ -65,7 +77,7 @@ namespace Retina
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (lastMat == null) 
+            if (lastMat == null)
                 return;
 
             if (pictureBox1.Image != null)
@@ -82,6 +94,17 @@ namespace Retina
         private void button2_Click(object sender, EventArgs e)
         {
             webcam = true;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Cameras cc = new Cameras();
+            cc.PickMode = true;
+            cc.StartPosition = FormStartPosition.CenterParent;
+            if (cc.ShowDialog(this) == DialogResult.OK)
+            {
+                picked = cc.Picked;
+            }
         }
     }
 }
