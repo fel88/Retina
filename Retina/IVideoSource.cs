@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using OpenCvSharp;
+using System.Text;
 using System.Xml.Linq;
 
 namespace Retina
@@ -10,6 +11,8 @@ namespace Retina
 
         void RestoreXml(XElement item);
         void StoreXml(StringBuilder sb);
+
+        VideoCapture GetCapture();
     }
 }
 

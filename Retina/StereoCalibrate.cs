@@ -44,8 +44,8 @@ namespace Retina
         int resH = 1080;
         private void button2_Click(object sender, EventArgs e)
         {
-            var cap1 = new VideoCapture((int)numericUpDown1.Value);
-            var cap2 = new VideoCapture((int)numericUpDown2.Value);
+            var cap1 = leftCam.GetCapture();
+            var cap2 = rightCam.GetCapture();
 
             cap1.Set(VideoCaptureProperties.FrameWidth, resW);
             cap1.Set(VideoCaptureProperties.FrameHeight, resH);
@@ -461,6 +461,30 @@ namespace Retina
         private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             DeleteSelectedPhotos();
+        }
+        IVideoSource leftCam = null;
+        IVideoSource rightCam = null;
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Cameras cc = new Cameras();
+            cc.PickMode = true;
+            cc.StartPosition = FormStartPosition.CenterParent;
+            if (cc.ShowDialog(this) == DialogResult.OK)
+            {
+                leftCam = cc.Picked;
+            }
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            Cameras cc = new Cameras();
+            cc.PickMode = true;
+            cc.StartPosition = FormStartPosition.CenterParent;
+            if (cc.ShowDialog(this) == DialogResult.OK)
+            {
+                rightCam = cc.Picked;
+            }
         }
     }
 }

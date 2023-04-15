@@ -1,10 +1,17 @@
-﻿using System.Text;
+﻿using OpenCvSharp;
+using System.Text;
 using System.Xml.Linq;
 
 namespace Retina
 {
     public class UsbWebCam : AbstractVideoSource, IVideoSource
     {
+        public int Index;
+        public VideoCapture GetCapture()
+        {
+            return new VideoCapture(Index);
+        }
+
         public void RestoreXml(XElement item)
         {
             throw new System.NotImplementedException();

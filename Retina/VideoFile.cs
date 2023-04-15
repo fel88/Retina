@@ -9,6 +9,11 @@ namespace Retina
         public string Path;
         public override string Description => Path;
 
+        public VideoCapture GetCapture()
+        {
+            return new VideoCapture(Path);
+        }
+
         public void RestoreXml(XElement item)
         {
             if (item.Attribute("name") != null)

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using OpenCvSharp;
+using System.Text;
 using System.Xml.Linq;
 
 namespace Retina
@@ -7,6 +8,11 @@ namespace Retina
     {
         public string Source;
         public override string Description => Source;
+
+        public VideoCapture GetCapture()
+        {
+            return new VideoCapture(Source);
+        }
 
         public void RestoreXml(XElement item)
         {

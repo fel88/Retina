@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -22,13 +23,14 @@ namespace Retina
 
         private void ListView1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (!PickMode) 
-                return;
-
             if (listView1.SelectedItems.Count == 0)
                 return;
 
             var vs = listView1.SelectedItems[0].Tag as IVideoSource;
+            
+            if (!PickMode) 
+                return;
+            
             Picked = vs;
             Close();
             DialogResult = DialogResult.OK;
@@ -65,6 +67,18 @@ namespace Retina
             var vs = listView1.SelectedItems[0].Tag as IVideoSource;
             VideoSources.Remove(vs);
             UpdateList();
+        }
+
+        private void runToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
+            var vs = listView1.SelectedItems[0].Tag as IVideoSource;
+            if(vs is VideoFile vf)
+            {
+                Process.Start(vf.Path);
+            }
         }
     }
 }
