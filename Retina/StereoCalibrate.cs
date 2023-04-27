@@ -86,118 +86,129 @@ namespace Retina
             int imgh = 0;
             TermCriteria criteria = new TermCriteria(CriteriaTypes.Eps | CriteriaTypes.Count, 100, 1e-5f);
             toolStripButton2.Enabled = false;
-            await Task.Run(() =>
+            List<StereoPair> spp = new List<StereoPair>();
+            for (int i = 0; i < listView1.Items.Count; i++)
             {
-                for (int i = 0; i < listView1.Items.Count; i++)
+                var b = listView1.Items[i].Tag as StereoPair;
+                spp.Add(b);
+            }
+
+            await Task.Run(() =>
+        {
+            for (int i = 0; i < spp.Count; i++)
+            {
+                toolStripStatusLabel1.Text = $"calibration: {i} / {spp.Count}";
+                var b = spp[i];
+                var left = b.Left;
+                var right = b.Right;
+                imgw = left.Width;
+                imgh = left.Height;
+                var leftg = left.CvtColor(ColorConversionCodes.BGR2GRAY);
+                var rightg = right.CvtColor(ColorConversionCodes.BGR2GRAY);
+                List<Point2f> corners_l = new List<Point2f>();
+                List<Point2f> corners_r = new List<Point2f>();
+                var out1_l = OutputArray.Create(corners_l);
+                var out1_r = OutputArray.Create(corners_r);
+                var res_l = Cv2.FindChessboardCorners(leftg, new OpenCvSharp.Size(9, 6), out1_l, ChessboardFlags.AdaptiveThresh | ChessboardFlags.FastCheck | ChessboardFlags.NormalizeImage);
+                var res_r = Cv2.FindChessboardCorners(rightg, new OpenCvSharp.Size(9, 6), out1_r, ChessboardFlags.AdaptiveThresh | ChessboardFlags.FastCheck | ChessboardFlags.NormalizeImage);
+
+
+
+                if (res_l && res_r)
                 {
-                    toolStripStatusLabel1.Text = $"calibration: {i} / {listView1.Items.Count}";
+                    var corners2 = Cv2.CornerSubPix(leftg, corners_l, new OpenCvSharp.Size(11, 11), new OpenCvSharp.Size(-1, -1), criteria);
+                    var corners3 = Cv2.CornerSubPix(rightg, corners_r, new OpenCvSharp.Size(11, 11), new OpenCvSharp.Size(-1, -1), criteria);
+                    objpoints.Add(objp.ToArray());
 
-                    var b = listView1.Items[i].Tag as StereoPair;
-                    var left = b.Left;
-                    var right = b.Right;
-                    imgw = left.Width;
-                    imgh = left.Height;
-                    var leftg = left.CvtColor(ColorConversionCodes.BGR2GRAY);
-                    var rightg = right.CvtColor(ColorConversionCodes.BGR2GRAY);
-                    List<Point2f> corners_l = new List<Point2f>();
-                    List<Point2f> corners_r = new List<Point2f>();
-                    var out1_l = OutputArray.Create(corners_l);
-                    var out1_r = OutputArray.Create(corners_r);
-                    var res_l = Cv2.FindChessboardCorners(leftg, new OpenCvSharp.Size(9, 6), out1_l, ChessboardFlags.AdaptiveThresh | ChessboardFlags.FastCheck | ChessboardFlags.NormalizeImage);
-                    var res_r = Cv2.FindChessboardCorners(rightg, new OpenCvSharp.Size(9, 6), out1_r, ChessboardFlags.AdaptiveThresh | ChessboardFlags.FastCheck | ChessboardFlags.NormalizeImage);
-
-
-
-                    if (res_l && res_r)
-                    {
-                        var corners2 = Cv2.CornerSubPix(leftg, corners_l, new OpenCvSharp.Size(11, 11), new OpenCvSharp.Size(-1, -1), criteria);
-                        var corners3 = Cv2.CornerSubPix(rightg, corners_r, new OpenCvSharp.Size(11, 11), new OpenCvSharp.Size(-1, -1), criteria);
-                        objpoints.Add(objp.ToArray());
-
-                        imgpoints.Add(corners2.ToArray());
-                        imgpoints2.Add(corners3.ToArray());
-                    }
+                    imgpoints.Add(corners2.ToArray());
+                    imgpoints2.Add(corners3.ToArray());
                 }
-                Vec3d[] rvecs1;
-                Vec3d[] rvecs2;
-                Vec3d[] tvecs1;
-                Vec3d[] tvecs2;
-                camMtx1 = new double[3, 3];
-                camMtx2 = new double[3, 3];
-                distCoeffs1 = new double[5];
-                distCoeffs2 = new double[5];
-                var d = Cv2.CalibrateCamera(
-                    objpoints.Select(z => z.ToList()).ToList(),
-                    imgpoints.Select(z => z.ToList()).ToList(),
-                    new OpenCvSharp.Size(imgw, imgh),
-                     camMtx1, distCoeffs1, out rvecs1, out tvecs1, CalibrationFlags.None);
+            }
+            if (objpoints.Count == 0)
+            {
+                MessageBox.Show("no points detected");
+                return;
+            }
+            Vec3d[] rvecs1;
+            Vec3d[] rvecs2;
+            Vec3d[] tvecs1;
+            Vec3d[] tvecs2;
+            camMtx1 = new double[3, 3];
+            camMtx2 = new double[3, 3];
+            distCoeffs1 = new double[5];
+            distCoeffs2 = new double[5];
+            var d = Cv2.CalibrateCamera(
+                objpoints.Select(z => z.ToList()).ToList(),
+                imgpoints.Select(z => z.ToList()).ToList(),
+                new OpenCvSharp.Size(imgw, imgh),
+                 camMtx1, distCoeffs1, out rvecs1, out tvecs1, CalibrationFlags.None);
 
-                var d2 = Cv2.CalibrateCamera(
-                  objpoints.Select(z => z.ToList()).ToList(),
-                  imgpoints2.Select(z => z.ToList()).ToList(),
-                  new OpenCvSharp.Size(imgw, imgh),
-                   camMtx2, distCoeffs2, out rvecs2, out tvecs2, CalibrationFlags.None);
-
-
-
-                Mat R = new Mat();
-                Mat T = new Mat();
-                Mat E = new Mat();
-                Mat F = new Mat();
-                var ims = new OpenCvSharp.Size(imgw, imgh);
-                Mat[] cameraMatrix = new Mat[2];
-                Mat[] distCoeffs = new Mat[2];
+            var d2 = Cv2.CalibrateCamera(
+              objpoints.Select(z => z.ToList()).ToList(),
+              imgpoints2.Select(z => z.ToList()).ToList(),
+              new OpenCvSharp.Size(imgw, imgh),
+               camMtx2, distCoeffs2, out rvecs2, out tvecs2, CalibrationFlags.None);
 
 
-                var rr = OpenCvSharp.Cv2.StereoCalibrate(objpoints,
-                    imgpoints,
-                    imgpoints2,
-                    camMtx1,
-                    distCoeffs1,
-                    camMtx2,
-                    distCoeffs2,
-                 ims, R, T, E, F,
-                 /*
 
-                 CalibrationFlags.SameFocalLength |
-
-                 CalibrationFlags.ZeroTangentDist |
-                 CalibrationFlags.FixK3 |
-                 CalibrationFlags.RationalModel |
-                 CalibrationFlags.FixK4 |
-                 CalibrationFlags.FixK5,*/criteria:
-                 criteria);
+            Mat R = new Mat();
+            Mat T = new Mat();
+            Mat E = new Mat();
+            Mat F = new Mat();
+            var ims = new OpenCvSharp.Size(imgw, imgh);
+            Mat[] cameraMatrix = new Mat[2];
+            Mat[] distCoeffs = new Mat[2];
 
 
-                R1 = new Mat();
-                R2 = new Mat();
-                P1 = new Mat();
-                P2 = new Mat();
-                Mat Q = new Mat();
+            var rr = OpenCvSharp.Cv2.StereoCalibrate(objpoints,
+                imgpoints,
+                imgpoints2,
+                camMtx1,
+                distCoeffs1,
+                camMtx2,
+                distCoeffs2,
+             ims, R, T, E, F,
+             /*
 
-                Cv2.StereoRectify(
-                    Mat.FromArray(camMtx1),
-                    Mat.FromArray(distCoeffs1),
-                    Mat.FromArray(camMtx2),
-                    Mat.FromArray(distCoeffs2),
-                    new OpenCvSharp.Size(imgw, imgh), R, T, R1, R2, P1, P2, Q);
+             CalibrationFlags.SameFocalLength |
 
-                Rect roi1;
-                Rect roi2;
-                opc1 = Cv2.GetOptimalNewCameraMatrix(Mat.FromArray(camMtx1), Mat.FromArray(distCoeffs1), ims, 1, ims, out roi1);
-                opc2 = Cv2.GetOptimalNewCameraMatrix(Mat.FromArray(camMtx2), Mat.FromArray(distCoeffs2), ims, 1, ims, out roi2);
-
-                bool newOpt = checkBox3.Checked;
-                Cv2.InitUndistortRectifyMap(
-                     newOpt ? opc1 : Mat.FromArray(camMtx1),
-                    Mat.FromArray(distCoeffs1), R1, P1, ims, MatType.CV_32FC1, map1, map2);
-
-                Cv2.InitUndistortRectifyMap(
-                    newOpt ? opc2 : Mat.FromArray(camMtx2),
-                    Mat.FromArray(distCoeffs2), R2, P2, ims, MatType.CV_32FC1, map11, map22);
+             CalibrationFlags.ZeroTangentDist |
+             CalibrationFlags.FixK3 |
+             CalibrationFlags.RationalModel |
+             CalibrationFlags.FixK4 |
+             CalibrationFlags.FixK5,*/criteria:
+             criteria);
 
 
-            });
+            R1 = new Mat();
+            R2 = new Mat();
+            P1 = new Mat();
+            P2 = new Mat();
+            Mat Q = new Mat();
+
+            Cv2.StereoRectify(
+                Mat.FromArray(camMtx1),
+                Mat.FromArray(distCoeffs1),
+                Mat.FromArray(camMtx2),
+                Mat.FromArray(distCoeffs2),
+                new OpenCvSharp.Size(imgw, imgh), R, T, R1, R2, P1, P2, Q);
+
+            Rect roi1;
+            Rect roi2;
+            opc1 = Cv2.GetOptimalNewCameraMatrix(Mat.FromArray(camMtx1), Mat.FromArray(distCoeffs1), ims, 1, ims, out roi1);
+            opc2 = Cv2.GetOptimalNewCameraMatrix(Mat.FromArray(camMtx2), Mat.FromArray(distCoeffs2), ims, 1, ims, out roi2);
+
+            bool newOpt = checkBox3.Checked;
+            Cv2.InitUndistortRectifyMap(
+                 newOpt ? opc1 : Mat.FromArray(camMtx1),
+                Mat.FromArray(distCoeffs1), R1, P1, ims, MatType.CV_32FC1, map1, map2);
+
+            Cv2.InitUndistortRectifyMap(
+                newOpt ? opc2 : Mat.FromArray(camMtx2),
+                Mat.FromArray(distCoeffs2), R2, P2, ims, MatType.CV_32FC1, map11, map22);
+
+
+        });
             toolStripButton2.Enabled = true;
             toolStripStatusLabel1.Text = "calibration complete";
         }
@@ -275,6 +286,7 @@ namespace Retina
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "All images files (*.bmp;*.jpg;*.png)|*.bmp;*.jpg;*.png";
             ofd.Multiselect = true;
             if (ofd.ShowDialog() != DialogResult.OK)
                 return;
@@ -485,6 +497,34 @@ namespace Retina
             {
                 rightCam = cc.Picked;
             }
+        }
+
+        private void loadSeparateToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Title = "Left image";
+            ofd.Filter = "All images files (*.bmp;*.jpg;*.png)|*.bmp;*.jpg;*.png";
+
+            if (ofd.ShowDialog() != DialogResult.OK)
+                return;
+
+            OpenFileDialog ofd2 = new OpenFileDialog();
+            ofd2.Title = "Right image";
+            ofd2.Filter = "All images files (*.bmp;*.jpg;*.png)|*.bmp;*.jpg;*.png";
+
+            if (ofd2.ShowDialog() != DialogResult.OK)
+                return;
+
+            var lmat = Cv2.ImRead(ofd.FileName);
+            var rmat = Cv2.ImRead(ofd2.FileName);
+
+            var sp = new StereoPair() { Left = lmat, Right = rmat };
+            listView1.Items.Add(new ListViewItem(new string[] {
+                    DateTime.Now.ToLongTimeString(), "", "", "" })
+            {
+                Tag = sp
+            });
+
         }
     }
 }
