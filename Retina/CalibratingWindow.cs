@@ -1,5 +1,6 @@
 ﻿using OpenCvSharp;
 using OpenCvSharp.Extensions;
+using Retina;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -212,6 +213,9 @@ namespace UniCutSheetRecognizerPlugin
             await Task.Run(() =>
             {
                 Mat mat = new Mat();
+
+                cap = camera.GetCapture();
+
                 if (cap != null)
                 {
                     cap.Read(mat);
@@ -219,8 +223,6 @@ namespace UniCutSheetRecognizerPlugin
                     NewImage(mat);
                 }
             });
-
-
         }
 
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
@@ -437,6 +439,7 @@ namespace UniCutSheetRecognizerPlugin
         {
             timer1.Enabled = !timer1.Enabled;
         }
+
         VideoCapture cap = null;
         int resW = 1920;
         int resH = 1080;
@@ -445,7 +448,7 @@ namespace UniCutSheetRecognizerPlugin
         {
             if (cap == null)
             {
-                cap = new VideoCapture(0);
+                cap = camera.GetCapture();
                 cap.Set(VideoCaptureProperties.FrameWidth, resW);
                 cap.Set(VideoCaptureProperties.FrameHeight, resH);
 
@@ -549,6 +552,17 @@ namespace UniCutSheetRecognizerPlugin
         {
             pictureBox2.Image.Save("temp.jpg");
             Process.Start("temp.jpg");
+        }
+        IVideoSource camera;
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Cameras cc = new Cameras();
+            cc.PickMode = true;
+            cc.StartPosition = FormStartPosition.CenterParent;
+            if (cc.ShowDialog(this) == DialogResult.OK)
+            {
+                camera = cc.Picked;
+            }
         }
     }
 }

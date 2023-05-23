@@ -17,13 +17,20 @@ namespace Retina
             InitializeComponent();
         }
         public IVideoSource VideoSource;
+        bool editMode = false;
         private void button1_Click(object sender, EventArgs e)
         {
             if (radioButton1.Checked)
             {
                 RtspCamera cam = new RtspCamera();
+                if (editMode)                
+                    cam = VideoSource as RtspCamera;
+                
                 cam.Name = textBox2.Text;
-                VideoSource = cam;
+
+                if (!editMode)
+                    VideoSource = cam;
+
                 cam.Source = textBox1.Text;
                 DialogResult = DialogResult.OK;
                 Close();
@@ -46,6 +53,24 @@ namespace Retina
             {
                 textBox3.Text = ofd.FileName;
             }
+        }
+
+        internal void Init(IVideoSource vs)
+        {
+            textBox2.Text = vs.Name;
+            if (vs is RtspCamera r)
+            {
+                radioButton1.Checked = true;
+                textBox1.Text = r.Source;
+            }
+            editMode = true;
+            VideoSource = vs;
+
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

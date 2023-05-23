@@ -27,10 +27,10 @@ namespace Retina
                 return;
 
             var vs = listView1.SelectedItems[0].Tag as IVideoSource;
-            
-            if (!PickMode) 
+
+            if (!PickMode)
                 return;
-            
+
             Picked = vs;
             Close();
             DialogResult = DialogResult.OK;
@@ -75,10 +75,23 @@ namespace Retina
                 return;
 
             var vs = listView1.SelectedItems[0].Tag as IVideoSource;
-            if(vs is VideoFile vf)
+            if (vs is VideoFile vf)
             {
                 Process.Start(vf.Path);
             }
+        }
+
+        private void editToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
+            var vs = listView1.SelectedItems[0].Tag as IVideoSource;
+            CameraEditDialog ced = new CameraEditDialog();
+            ced.Init(vs);
+            ced.ShowDialog();
+            UpdateList();
+
         }
     }
 }
