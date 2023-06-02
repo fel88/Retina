@@ -129,10 +129,8 @@ namespace Retina
 
             await Task.Run(() =>
             {
-
-
-                var v1 = openCam(cam1Idx, true, false, ww, hh);
-                var v2 = openCam(cam2Idx, true, false, ww, hh);
+                var v1 = Source1.GetCapture();
+                var v2 = Source2.GetCapture();
                 int cnt = (int)numericUpDown1.Value;
                 int i = 0;
                 //for (int i = 0; i < cnt; i++)
@@ -183,8 +181,11 @@ namespace Retina
 
         Bitmap renderImg;
 
+        public IVideoSource Source1;
+        public IVideoSource Source2;
+
         VideoCapture openCam(int idx, bool mjpeg, bool autoFocus, int w, int h)
-        {
+        {            
             var cap = new VideoCapture(idx);
 
             cap.Set(VideoCaptureProperties.FrameWidth, w);
@@ -199,6 +200,7 @@ namespace Retina
             cap.Set(VideoCaptureProperties.AutoFocus, autoFocus ? 1 : 0);
             return cap;
         }
+
         bool stop = false;
         private void button2_Click(object sender, EventArgs e)
         {
@@ -212,22 +214,8 @@ namespace Retina
             fixedFrames = checkBox1.Checked;
         }
 
-        int cam1Idx = 0;
-        int cam2Idx = 1;
-        private void numericUpDown2_ValueChanged(object sender, EventArgs e)
-        {
-            cam1Idx = (int)numericUpDown2.Value;
-        }
+        
 
-        private void numericUpDown3_ValueChanged(object sender, EventArgs e)
-        {
-            cam2Idx = (int)numericUpDown3.Value;
-        }
-
-        private void addCalibrateLineToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
 
         List<int> lines = new List<int>();
 
@@ -273,6 +261,28 @@ namespace Retina
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             calibrateMode = comboBox1.SelectedIndex == 1;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Cameras cc = new Cameras();
+            cc.PickMode = true;
+            cc.StartPosition = FormStartPosition.CenterParent;
+            if (cc.ShowDialog(this) == DialogResult.OK)
+            {
+                Source1 = cc.Picked;
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            Cameras cc = new Cameras();
+            cc.PickMode = true;
+            cc.StartPosition = FormStartPosition.CenterParent;
+            if (cc.ShowDialog(this) == DialogResult.OK)
+            {
+                Source2 = cc.Picked;
+            }
         }
     }
 }
